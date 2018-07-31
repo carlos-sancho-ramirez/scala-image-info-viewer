@@ -12,7 +12,10 @@ object ImageInfoDumper {
           try {
             val result = ImageInfoGetter.getInfo(inStream)
             if (result.nonEmpty) {
-              val (header, frame) = result.get
+              val details = result.get
+              import details.header
+              import details.frame
+
               println(s"Image found: $imagePath")
               println(s"  ${header.format}")
               println(s"  Resolution: ${frame.width}x${frame.height}")

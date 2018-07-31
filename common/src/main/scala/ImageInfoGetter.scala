@@ -7,6 +7,7 @@ case class FrameDetails(bitsPerSample: Int, width: Int, height: Int, components:
     throw new IllegalArgumentException()
   }
 }
+case class ImageDetails(header: Header, frame: FrameDetails)
 
 object ImageInfoGetter {
   private def readUnsignedByte(array: IndexedSeq[Byte], index: Int): Int = {
@@ -209,7 +210,7 @@ object ImageInfoGetter {
     else None
   }
 
-  def getInfo(inStream: InputStream): Option[(Header, FrameDetails)] = {
+  def getInfo(inStream: InputStream): Option[ImageDetails] = {
     if (readUnsignedBigEndianShort(inStream) == JpegMarkers.SOI) {
       val firstMarkerId = readUnsignedBigEndianShort(inStream)
       val firstMarkerContent = readMarkerContent(inStream)
@@ -230,7 +231,7 @@ object ImageInfoGetter {
         markerId = readUnsignedBigEndianShort(inStream)
       }
 
-      if (headerOpt.nonEmpty && frameOpt.nonEmpty) Some((headerOpt.get, frameOpt.get))
+      if (headerOpt.nonEmpty && frameOpt.nonEmpty) Some(ImageDetails(headerOpt.get, frameOpt.get))
       else None
     }
     else None
