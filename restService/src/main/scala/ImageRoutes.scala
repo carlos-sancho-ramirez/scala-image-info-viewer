@@ -1,5 +1,8 @@
+import java.io.File
+
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.Logging
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 
 import scala.concurrent.duration._
 import akka.http.scaladsl.server.Directives._
@@ -21,8 +24,8 @@ trait ImageRoutes extends JsonSupport {
   implicit lazy val timeout = Timeout(5.seconds) // usually we'd obtain the timeout from the system's configuration
 
   lazy val imageRoutes: Route =
-    pathPrefix("image") {
-      concat(
+    concat(
+      pathPrefix("image") {
         pathEnd {
           post {
             uploadedFile("imageFile") { case (_, file) =>
@@ -31,6 +34,9 @@ trait ImageRoutes extends JsonSupport {
             }
           }
         }
-      )
-    }
+      },
+      get {
+        getFromResource("index.html")
+      }
+    )
 }
