@@ -41,23 +41,27 @@ trait ImageRoutes extends JsonSupport {
           }
         }
       },
-      post {
-        extractRequestEntity { reqEntity =>
-          val newRequest = RequestBuilding.Post("/image", reqEntity)
-          val futureResponse = apiRequest(newRequest)
-          val f = futureResponse.flatMap { response =>
-            response.status match {
-              case StatusCodes.OK =>
-                val r = Unmarshal(response.entity).to[ImageDetails].map(composeHtmlResponse)
-                r.map(str => HttpEntity(ContentTypes.`text/html(UTF-8)`, str))
-              case _ => Future.failed(new RuntimeException(s"Invalid status code ${response.status}"))
+      pathSingleSlash {
+        concat(
+          post {
+            extractRequestEntity { reqEntity =>
+              val newRequest = RequestBuilding.Post("/image", reqEntity)
+              val futureResponse = apiRequest(newRequest)
+              val f = futureResponse.flatMap { response =>
+                response.status match {
+                  case StatusCodes.OK =>
+                    val r = Unmarshal(response.entity).to[ImageDetails].map(composeHtmlResponse)
+                    r.map(str => HttpEntity(ContentTypes.`text/html(UTF-8)`, str))
+                  case _ => Future.failed(new RuntimeException(s"Invalid status code ${response.status}"))
+                }
+              }
+              complete(f)
             }
+          },
+          get {
+            getFromResource("index.html")
           }
-          complete(f)
-        }
-      },
-      get {
-        getFromResource("index.html")
+        )
       }
     )
   }
