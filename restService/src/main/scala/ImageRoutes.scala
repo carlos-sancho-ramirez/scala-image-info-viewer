@@ -24,6 +24,7 @@ trait ImageRoutes extends JsonSupport {
 
   def imageCheckerActor: ActorRef
   def apiRequest(request: HttpRequest): Future[HttpResponse]
+  def composeHtmlResponse(details: ImageDetails): String
 
   // Required by the `ask` (?) method below
   implicit lazy val timeout = Timeout(5.seconds) // usually we'd obtain the timeout from the system's configuration
@@ -46,8 +47,10 @@ trait ImageRoutes extends JsonSupport {
           val futureResponse = apiRequest(newRequest)
           val f = futureResponse.flatMap { response =>
             response.status match {
-              case StatusCodes.OK => Unmarshal(response.entity).to[ImageDetails].map(details => s"<h1>${details.header.format}</h1>")
-              case _ => Future.failed(new RuntimeException(s"Invalid status code {response.status}"))
+              case StatusCodes.OK =>
+                val r = Unmarshal(response.entity).to[ImageDetails].map(composeHtmlResponse)
+                r.map(str => HttpEntity(ContentTypes.`text/html(UTF-8)`, str))
+              case _ => Future.failed(new RuntimeException(s"Invalid status code ${response.status}"))
             }
           }
           complete(f)

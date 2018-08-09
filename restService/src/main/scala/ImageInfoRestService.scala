@@ -18,6 +18,39 @@ object ImageInfoRestService extends App with ImageRoutes {
 
   override def apiRequest(request: HttpRequest) = Source.single(request).via(jsonApiConnectionFlow).runWith(Sink.head)
 
+  override def composeHtmlResponse(details: ImageDetails): String = {
+    val fileDetails = details.header.details.map { case (k, v) => s"<li>$k: $v</li>" }.mkString
+    val components = details.frame.components.map { comp =>
+      s"<tr><td>${comp.id}</td><td>${comp.horizontalSampling}x${comp.verticalSampling}</td><td>${comp.quantizationTableId}</td></tr>"
+    }.mkString
+
+    s"""
+       |<html>
+       | <head>Image Details</head>
+       | <body>
+       |  <h2>File Details</h2>
+       |  <ul>
+       |   <li>Format: ${details.header.format}</li>
+       |   $fileDetails
+       |  </ul>
+       |  <h2>Picture details</h2>
+       |  <ul>
+       |   <li>Resolution: ${details.frame.width}x${details.frame.height}</li>
+       |   <li>Bits per sample: ${details.frame.bitsPerSample}</li>
+       |  </ul>
+       |  <table>
+       |   <tr>
+       |    <td>id</td>
+       |    <td>Sampling</td>
+       |    <td>Quantization table id</td>
+       |   </tr>
+       |   $components
+       |  </table>
+       | </body>
+       |</html>
+     """.stripMargin
+  }
+
   lazy val routes: Route = imageRoutes
 
   Http().bindAndHandle(routes, "localhost", 8080)
